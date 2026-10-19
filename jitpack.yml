@@ -1,0 +1,5 @@
+# JitPack builds a GitHub tag on first request: com.github.layerhop:layerhop-kotlin:<tag>
+jdk:
+  - openjdk17
+install:
+  - ./gradlew publishToMavenLocal -x test --no-configuration-cache

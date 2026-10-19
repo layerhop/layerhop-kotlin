@@ -16,12 +16,24 @@ base units (100 USDC = `"100000000"`).
 
 ## Install
 
+Through [JitPack](https://jitpack.io/#layerhop/layerhop-kotlin) (builds each release tag from this repository):
+
 ```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+}
+
 // build.gradle.kts
 dependencies {
-    implementation("com.layerhop:layerhop:0.6.0")
+    implementation("com.github.layerhop:layerhop-kotlin:v0.6.0")
 }
 ```
+
+Maven Central (`com.layerhop:layerhop`) follows once the `com.layerhop` namespace is verified there.
 
 ## Quickstart
 
