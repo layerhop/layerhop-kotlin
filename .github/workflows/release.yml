@@ -1,0 +1,35 @@
+name: Release
+# Publishes com.layerhop:layerhop to Maven Central (Central Portal) when a version tag is pushed.
+# Repository secrets: MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD (a Central Portal user
+# token for the verified com.layerhop namespace), SIGNING_KEY (ASCII-armored GPG private key) and
+# SIGNING_KEY_PASSWORD. A version that is already on Maven Central is skipped.
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "HAS_CREDENTIALS=${{ secrets.MAVEN_CENTRAL_USERNAME != '' && secrets.SIGNING_KEY != '' }}" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew test
+      - id: check
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          if curl -fsS "https://repo1.maven.org/maven2/com/layerhop/layerhop/$v/layerhop-$v.pom" >/dev/null 2>&1; then echo "com.layerhop:layerhop $v is already on Maven Central"; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.check.outputs.skip != 'true' && env.HAS_CREDENTIALS != 'true'
+        run: echo "::notice::MAVEN_CENTRAL_* secrets are not set; skipping Maven Central (the release is still installable through JitPack)."
+      - if: steps.check.outputs.skip != 'true' && env.HAS_CREDENTIALS == 'true'
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
